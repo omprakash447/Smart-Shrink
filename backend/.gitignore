@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# TypeScript output directory
+dist/
+
+# Environment variable files
+.env
+
+# Logs
+*.log
+
+# OS files (macOS and Windows)
+.DS_Store
+Thumbs.db
+
+# IDE-specific files (for VSCode, WebStorm, etc.)
+.vscode/
+.idea/
