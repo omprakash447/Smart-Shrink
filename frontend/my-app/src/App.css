@@ -1,38 +1,80 @@
-.App {
-  text-align: center;
+.navbar {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%) !important;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.navbar-brand {
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.navbar-toggler {
+  border: none !important;
+  transition: transform 0.3s ease;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.navbar-toggler span {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  color: #fff;
+  transition: transform 0.3s ease;
 }
 
-.App-link {
-  color: #61dafb;
+.navbar-toggler:hover span {
+  transform: scale(1.1);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.nav-link {
+  font-weight: 500;
+  color: #212529 !important;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #f472b6 !important;
+}
+
+/* Modern collapse animation */
+.modern-collapse {
+  animation: slideIn 0.4s ease-out forwards;
+}
+
+@media (max-width: 991px) {
+  .navbar-nav {
+    padding: 1rem;
+    background: #fff;
+    border-radius: 1rem;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
-  to {
-    transform: rotate(360deg);
+
+  .navbar-collapse {
+    opacity: 0;
+    transform: scaleY(0.95);
+    transform-origin: top;
+  }
+
+  .navbar-collapse.show {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
   }
 }
