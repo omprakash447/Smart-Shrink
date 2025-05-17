@@ -1,8 +1,13 @@
+import bcrypt from "bcrypt";
 import cors from "cors";
 import express, { Request, Response } from "express";
+import JWT from "jsonwebtoken";
 import multer from "multer";
 import { Client } from "pg";
 import sharp from "sharp";
+
+
+const SEC_KEY = "smartshrink@password";
 
 // PostgreSQL connection
 const Connection = new Client({
@@ -52,6 +57,24 @@ const ImageSchema = async () => {
     throw err;
   }
 };
+const AuthSchema = async () => {
+  try {
+    await Connection.query(`
+CREATE TABLE IF NOT EXISTS authentication (
+  id SERIAL PRIMARY KEY,
+  userName VARCHAR(225) NOT NULL,
+  email VARCHAR(225) NOT NULL,
+  password VARCHAR(225) NOT NULL
+);
+
+    `);
+    console.log("Auth schema is created");
+  } catch (err) {
+    console.error("Failed to create schema:", err);
+    throw err;
+  }
+};
+AuthSchema();
 
 // Initialize database
 const initializeDatabase = async () => {
@@ -101,6 +124,109 @@ const upload = multer({
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).send("Hello World!");
 });
+
+
+
+
+
+// signup
+app.post("/signup-backend", async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { userName, email, password } = req.body;
+    const result = await Connection.query(
+      `SELECT * FROM authentication WHERE email = $1`, [email]
+    );
+    if (result.rows.length > 0) {
+      return res.status(400).send({ message: "Email already exists" });
+    }
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    const insertResult = await Connection.query(
+      `INSERT INTO authentication(userName, email, password) VALUES($1, $2, $3) RETURNING *`,
+      [userName, email, hashPassword]
+    );
+    return res.status(201).send({
+      message: "User signed up successfully",
+      user: insertResult.rows[0],
+    });
+  } catch (err: any) {
+    console.error("Signup error:", err);
+    return res.status(500).send({ error: "Internal server error", details: err.message });
+  }
+});
+// login
+app.post("/login-backend", async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { email, password } = req.body;
+    const result = await Connection.query(`select * from authentication where email=$1`, [email]);
+    if (result.rows.length === 0) {
+      return res.status(400).send({ message: "Email not found" });
+    }
+    const isValidpass = await bcrypt.compare(password, result.rows[0].password);
+    if (!isValidpass) {
+      return res.status(400).send({ message: "Invalid password" });
+    }
+    // generate the token for auth
+    const token = JWT.sign(
+      { email: result.rows[0].email },
+      SEC_KEY,
+      { expiresIn: "1h" }
+    );
+    return res.status(200).send({ message: "Login successful", token });
+  } catch (err) {
+    return res.status(404).send(err);
+  }
+});
+// get only loggedin user
+app.get("/get-loggedin-user", async (req: Request, res: Response): Promise<any> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    const token = authHeader.split(" ")[1];
+    const decoded: any = JWT.verify(token, SEC_KEY);
+    const result=await Connection.query(`select * from authentication where email=$1`,[decoded.email]);
+    return res.status(200).send(result.rows[0]);
+  } catch (err: any) {
+    console.error(err);
+    res.status(401).json({ message: "Invalid or expired token", error: err.message });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Upload images to PostgreSQL with compression
 app.post("/uploader", upload.single("file"), async (req: Request, res: Response): Promise<any> => {
@@ -172,7 +298,7 @@ app.get("/images-compress", async (_req: Request, res: Response) => {
 });
 
 // Download a compressed image by ID
-app.get("/download/:id", async (req: Request, res: Response):Promise<any> => {
+app.get("/download/:id", async (req: Request, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
     const result = await Connection.query(
