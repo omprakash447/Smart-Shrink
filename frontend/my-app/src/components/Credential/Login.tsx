@@ -1,12 +1,20 @@
-import "bootstrap/dist/css/bootstrap.min.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiLock, FiMail } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../controller/Authcontroller";
 
 export default function Login() {
+    const { login, isAuthenticated } = useAuth();
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const navigate = useNavigate();
+
+    // Redirect to uploader if already logged in
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/uploder");
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -23,12 +31,11 @@ export default function Login() {
                 throw new Error(data.message || "Login failed");
             }
 
-            // Store token in localStorage
+            // ✅ Correct token key here
             localStorage.setItem("token", data.token);
-
             console.log("Login successful:", data);
+            login();
             alert("Login Successful!");
-            navigate("/dashboard"); // Redirect to dashboard or desired page
         } catch (err: any) {
             console.error("Login error:", err.message);
             alert("Login failed: " + err.message);

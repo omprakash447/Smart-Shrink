@@ -1,13 +1,22 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FiLock, FiMail, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../controller/Authcontroller";
 
 export default function Signup() {
     const navigate=useNavigate();
+    const {isAuthenticated}=useAuth();
     const [name, setName] = useState<string>("");
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+
+
+    useEffect(()=>{
+        if(isAuthenticated){
+            navigate("/uploder");
+        }
+    },[isAuthenticated , navigate]);
 
     const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

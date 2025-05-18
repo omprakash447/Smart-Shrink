@@ -48,7 +48,8 @@ const ImageSchema = async () => {
         image_url VARCHAR(255),
         image_original_size BIGINT NOT NULL,
         image_compressed_size BIGINT NOT NULL,
-        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        uploaded_by VARCHAR(225) NOT NULL
       );
     `);
     console.log("Image schema is ensured for table 'imageuploader'");
@@ -142,7 +143,7 @@ app.post("/signup-backend", async (req: Request, res: Response): Promise<any> =>
     const hashPassword = await bcrypt.hash(password, 10);
 
     const insertResult = await Connection.query(
-      `INSERT INTO authentication(userName, email, password) VALUES($1, $2, $3) RETURNING *`,
+      `INSERT INTO authentication (userName, email, password) VALUES($1, $2, $3) RETURNING *`,
       [userName, email, hashPassword]
     );
     return res.status(201).send({
@@ -187,7 +188,7 @@ app.get("/get-loggedin-user", async (req: Request, res: Response): Promise<any> 
     }
     const token = authHeader.split(" ")[1];
     const decoded: any = JWT.verify(token, SEC_KEY);
-    const result=await Connection.query(`select * from authentication where email=$1`,[decoded.email]);
+    const result = await Connection.query(`select * from authentication where email=$1`, [decoded.email]);
     return res.status(200).send(result.rows[0]);
   } catch (err: any) {
     console.error(err);
@@ -229,15 +230,46 @@ app.get("/get-loggedin-user", async (req: Request, res: Response): Promise<any> 
 
 
 // Upload images to PostgreSQL with compression
+interface JwtPayload {
+  email: string;
+  iat?: number;
+  exp?: number;
+}
+
 app.post("/uploader", upload.single("file"), async (req: Request, res: Response): Promise<any> => {
   try {
+    // Inline token verification
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("No token provided");
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    let decoded: JwtPayload;
+    try {
+      decoded = JWT.verify(token, SEC_KEY) as JwtPayload;
+      console.log("Decoded token:", decoded); // Log decoded payload
+      if (!decoded.email) {
+        console.log("Token missing email field");
+        return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      }
+    } catch (err: any) {
+      console.error("Token verification failed:", err.message);
+      return res.status(401).json({ error: "Unauthorized: Invalid token", details: err.message });
+    }
+
+    const userEmail = decoded.email;
+    console.log("User email from token:", userEmail); // Log user email
+
     if (!req.file) {
+      console.log("No file uploaded");
       return res.status(400).json({ error: "No image uploaded" });
     }
 
     const file = req.file;
     const originalSize = file.size;
-    // console.log("Received file:", file.originalname, file.size, file.type);
+    console.log("Received file:", file.originalname, originalSize, file.mimetype); // Log file details
 
     let compressedBuffer;
     try {
@@ -245,39 +277,82 @@ app.post("/uploader", upload.single("file"), async (req: Request, res: Response)
         .resize({ width: 800, fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 80 })
         .toBuffer();
-    } catch (sharpErr) {
-      console.error("Sharp processing failed:", sharpErr);
-      return res.status(400).json({ error: "Failed to process image" });
+      console.log("Image compressed successfully, size:", compressedBuffer.length); // Log compression
+    } catch (sharpErr: any) {
+      console.error("Sharp processing failed:", sharpErr.message);
+      return res.status(400).json({ error: "Failed to process image", details: sharpErr.message });
     }
 
     const compressedSize = compressedBuffer.length;
-    console.log("Compressed size:", compressedSize);
 
     try {
-      await Connection.query(
-        `INSERT INTO imageuploader (image_name, image_data, image_url, image_original_size, image_compressed_size)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [file.originalname, compressedBuffer, "local-upload", originalSize, compressedSize]
+      const result = await Connection.query(
+        `INSERT INTO imageuploader 
+          (image_name, image_data, image_url, image_original_size, image_compressed_size, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [file.originalname, compressedBuffer, "local-upload", originalSize, compressedSize, userEmail]
       );
-    } catch (dbErr) {
-      console.error("Database insert failed:", dbErr);
-      return res.status(500).json({ error: "Failed to save image to database" });
+      console.log("Database insert successful, ID:", result.rows[0].id); // Log insert success
+    } catch (dbErr: any) {
+      console.error("Database insert failed:", dbErr.message);
+      return res.status(500).json({ error: "Failed to save image to database", details: dbErr.message });
     }
 
     res.status(200).json({ message: "Image uploaded successfully" });
-  } catch (err) {
-    console.error("Upload failed:", err);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (err: any) {
+    console.error("Upload failed:", err.message);
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 });
 
 // Get all compressed images from the database
-app.get("/images-compress", async (_req: Request, res: Response) => {
+interface JwtPayload {
+  email: string;
+  iat?: number;
+  exp?: number;
+}
+interface JwtPayload {
+  email: string;
+  iat?: number;
+  exp?: number;
+}
+
+app.get("/images-compress", async (req: Request, res: Response):Promise<any> => {
   try {
-    const result = await Connection.query(`
+    // Inline token verification
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("No token provided");
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    let decoded: JwtPayload;
+    try {
+      decoded = JWT.verify(token, SEC_KEY) as JwtPayload;
+      console.log("Decoded token:", decoded); // Log decoded payload
+      if (!decoded.email) {
+        console.log("Token missing email field");
+        return res.status(401).json({ error: "Unauthorized: Invalid token payload" });
+      }
+    } catch (err: any) {
+      console.error("Token verification failed:", err.message);
+      return res.status(401).json({ error: "Unauthorized: Invalid token", details: err.message });
+    }
+
+    const userEmail = decoded.email;
+    console.log("User email from token:", userEmail); // Log user email
+
+    const result = await Connection.query(
+      `
       SELECT id, image_name, image_data, image_original_size, image_compressed_size 
       FROM imageuploader
-    `);
+      WHERE uploaded_by = $1
+      `,
+      [userEmail]
+    );
+    console.log("Fetched images for user:", userEmail, "Count:", result.rows.length); // Log query results
+
     const images = result.rows.map((row) => {
       const base64Image = Buffer.from(row.image_data).toString("base64");
       const mimeType = "image/jpeg";
@@ -291,12 +366,11 @@ app.get("/images-compress", async (_req: Request, res: Response) => {
     });
 
     res.status(200).json(images);
-  } catch (err) {
-    console.error("Failed to fetch images:", err);
-    res.status(500).json({ error: "Failed to fetch images" });
+  } catch (err: any) {
+    console.error("Failed to fetch images:", err.message);
+    res.status(500).json({ error: "Failed to fetch images", details: err.message });
   }
 });
-
 // Download a compressed image by ID
 app.get("/download/:id", async (req: Request, res: Response): Promise<any> => {
   try {

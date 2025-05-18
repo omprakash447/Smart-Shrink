@@ -2,6 +2,8 @@ import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useEffect, useState } from "react";
 import { FiAlertCircle, FiCheckCircle, FiImage, FiLoader, FiUploadCloud } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../controller/Authcontroller";
 
 interface Image {
   id: number;
@@ -12,6 +14,8 @@ interface Image {
 }
 
 export const Uploder = () => {
+  const naviget=useNavigate();
+  const {isAuthenticated}=useAuth();
   const [upload, setUpload] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -21,6 +25,17 @@ export const Uploder = () => {
     type: null,
   });
   const [showModal, setShowModal] = useState(false);
+
+
+
+
+  useEffect(()=>{
+    if(!isAuthenticated){
+      naviget("/signin");
+    }
+  },[isAuthenticated , naviget]);
+
+
 
   // Function to format file size
   const formatFileSize = (bytes: number): string => {
@@ -35,7 +50,13 @@ export const Uploder = () => {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const response = await fetch("http://localhost:4000/images-compress");
+        const response = await fetch("http://localhost:4000/images-compress",{
+          method:"GET",
+          headers:{
+            "Content-Type":"application/json",
+            "Authorization":`Bearer ${localStorage.getItem("token")}`
+          }
+        });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -95,12 +116,17 @@ export const Uploder = () => {
 
     const fileData = new FormData();
     fileData.append("file", upload);
+    
+    const token=localStorage.getItem("token");
 
     try {
       setLoading(true);
       setMessage({ text: "", type: null });
       const res = await axios.post("http://localhost:4000/uploader", fileData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { 
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${token}`,
+         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -114,7 +140,12 @@ export const Uploder = () => {
       setUpload(null);
       setProgress(0);
 
-      const response = await fetch("http://localhost:4000/images-compress");
+      const response = await fetch("http://localhost:4000/images-compress",{
+        method:"GET",
+        headers:{
+          "Authorization": `Bearer ${token}`,
+        }
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch images: HTTP ${response.status}`);
       }
