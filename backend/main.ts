@@ -1,8 +1,11 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import bcrypt from "bcrypt";
 import cors from "cors";
 import express, { Request, Response } from "express";
 import JWT from "jsonwebtoken";
 import multer from "multer";
+import { PDFDocument } from "pdf-lib";
+import PdfParse from "pdf-parse";
 import { Client } from "pg";
 import sharp from "sharp";
 
@@ -203,6 +206,96 @@ app.get("/get-loggedin-user", async (req: Request, res: Response): Promise<any> 
 
 
 
+// parse the pdf
+const pdffile = multer({ storage: multer.memoryStorage() });
+const genai = new GoogleGenerativeAI("AIzaSyCXSJ1XzZ85mLSEgVnW8ZHGfoFH7aVPM_0");
+
+app.post("/pdf-parser", pdffile.single("file"), async (req: Request, res: Response):Promise<any> => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).send({ error: "File not uploaded" });
+    }
+
+    const parser = await PdfParse(file.buffer);
+    const textExtract = parser.text;
+
+    const model = await genai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const result = await model.generateContent(`Hey can you summarize this resume and suggest skills for 2025–2030, and give technical + theoretical interview questions based on this:\n\n${textExtract}`);
+
+    const generatedText = await result.response.text();
+    return res.status(200).send({ result: generatedText }); // ✅ FIELD NAME MUST BE "result"
+  } catch (err) {
+    console.error("PDF Parsing error:", err);
+    res.status(500).send({ error: "Internal Server Error" });
+  }
+});
+
+
+
+// fetch the gemein api
+
+// app.post("/gen-ai",async(req:Request , res:Response):Promise<any>=>{
+//   try{
+//     const textofgenai=await model.generateContent("who is the father of nation");
+//     const responsegenai=await textofgenai.response;
+//   }catch(err){
+//     return res.status(404).send("error");
+//   }
+// })
+
+
+
+
+
+
+
+
+// pdf compress...
+const pdfmulter = multer({ storage: multer.memoryStorage() });
+
+app.post("/pdf-compress", pdfmulter.single("pdf"), async (req: Request, res: Response): Promise<any> => {
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded");
+    }
+
+    // Load PDF from uploaded file buffer (in-memory)
+    const pdfDoc = await PDFDocument.load(req.file.buffer);
+
+    // Remove metadata to reduce file size a bit
+    pdfDoc.setTitle("");
+    pdfDoc.setAuthor("");
+    pdfDoc.setSubject("");
+    pdfDoc.setKeywords([]);
+
+    // Save the rewritten PDF to buffer
+    const compressedPdfBuffer = await pdfDoc.save();
+
+    // Set response headers for PDF download
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'attachment; filename="compressed.pdf"',
+      "Content-Length": compressedPdfBuffer.length,
+    });
+
+    // Send the compressed PDF buffer directly to client
+    return res.send(Buffer.from(compressedPdfBuffer));
+
+  } catch (error) {
+    console.error("PDF compression error:", error);
+    return res.status(500).send("Error compressing PDF");
+  }
+});
+
+
+
+
+
+
+
+
+
 
 
 
@@ -317,7 +410,7 @@ interface JwtPayload {
   exp?: number;
 }
 
-app.get("/images-compress", async (req: Request, res: Response):Promise<any> => {
+app.get("/images-compress", async (req: Request, res: Response): Promise<any> => {
   try {
     // Inline token verification
     const authHeader = req.headers.authorization;

@@ -5,18 +5,20 @@ import App from './App';
 import { Navbar } from './components/Navbar/Navbar';
 import { AuthProvider } from './controller/Authcontroller';
 
-
-
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-    <AuthProvider>
-    <Navbar />
-    <App />
-    </ AuthProvider>
+      <AuthProvider>
+        <div className="app-container">
+          <Navbar />
+          <main className="main-content">
+            <App />
+          </main>
+        </div>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

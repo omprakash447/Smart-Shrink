@@ -31,7 +31,6 @@ export default function Login() {
                 throw new Error(data.message || "Login failed");
             }
 
-            // ✅ Correct token key here
             localStorage.setItem("token", data.token);
             console.log("Login successful:", data);
             login();
@@ -42,36 +41,30 @@ export default function Login() {
         }
     };
 
-    const gradientStyle = {
-        background: "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)",
-        color: "white",
-    };
-
     return (
-        <div className="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-4 p-lg-5 bg-white">
-            <div className="card border-2 shadow-sm rounded-4 p-4 p-md-5 w-100" style={{ maxWidth: "500px" }}>
+        <div className="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-4 p-lg-5 bg-dark">
+            <div className="card border-0 shadow-lg rounded-4 p-4 p-md-5 w-100 fade show" style={{ maxWidth: "500px", backgroundColor: "#222222" }}>
                 <div className="text-center mb-4 mb-md-5">
-                    <h1 className="h3 fw-bold" style={{ color: "#a855f7" }}>
+                    <h1 className="h3 fw-bold text-light">
                         Login to Your Account
                     </h1>
-                    <p className="text-muted small">Welcome back! Please login.</p>
+                    <p className="small" style={{ color: "white" }}>Welcome back! Please login.</p>
                 </div>
 
                 <form onSubmit={handleLogin}>
                     <div className="mb-4">
-                        <label htmlFor="email" className="form-label small fw-medium" style={{ color: "#f472b6" }}>
+                        <label htmlFor="email" className="form-label small fw-medium text-light">
                             Email
                         </label>
                         <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                                <FiMail style={{ color: "#f472b6" }} />
+                            <span className="input-group-text bg-secondary border-end-0">
+                                <FiMail style={{ color: "#b3b3b3" }} />
                             </span>
                             <input
                                 type="email"
                                 id="email"
-                                className="form-control border-start-0"
+                                className="form-control border-start-0 bg-dark text-light"
                                 placeholder="Enter your email"
-                                style={{ borderRadius: "0.5rem" }}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -81,19 +74,18 @@ export default function Login() {
                     </div>
 
                     <div className="mb-4">
-                        <label htmlFor="password" className="form-label small fw-medium" style={{ color: "#f472b6" }}>
+                        <label htmlFor="password" className="form-label small fw-medium text-light">
                             Password
                         </label>
                         <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                                <FiLock style={{ color: "#f472b6" }} />
+                            <span className="input-group-text bg-secondary border-end-0">
+                                <FiLock style={{ color: "#b3b3b3" }} />
                             </span>
                             <input
                                 type="password"
                                 id="password"
-                                className="form-control border-start-0"
+                                className="form-control border-start-0 bg-dark text-light"
                                 placeholder="Enter your password"
-                                style={{ borderRadius: "0.5rem" }}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
@@ -104,22 +96,39 @@ export default function Login() {
 
                     <button
                         type="submit"
-                        className="btn w-100 text-white py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 rounded-3"
-                        style={gradientStyle}
+                        className="btn btn-dark w-100 text-light py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
                     >
                         Login
                     </button>
 
                     <div className="mt-3 text-center">
-                        <p className="small">
+                        <p className="small text-light">
                             Don’t have an account?{" "}
-                            <a href="/signup" style={{ color: "#a855f7", fontWeight: "600" }}>
+                            <a href="/signup" className="text-light fw-semibold">
                                 Sign Up
                             </a>
                         </p>
                     </div>
                 </form>
             </div>
+            <style>{`
+        .form-control::placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .form-control::-webkit-input-placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .form-control::-moz-placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .form-control:-ms-input-placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+      `}</style>
         </div>
     );
 }

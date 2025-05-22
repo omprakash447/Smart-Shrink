@@ -14,8 +14,8 @@ interface Image {
 }
 
 export const Uploder = () => {
-  const naviget=useNavigate();
-  const {isAuthenticated}=useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [upload, setUpload] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -26,16 +26,11 @@ export const Uploder = () => {
   });
   const [showModal, setShowModal] = useState(false);
 
-
-
-
-  useEffect(()=>{
-    if(!isAuthenticated){
-      naviget("/signin");
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/signin");
     }
-  },[isAuthenticated , naviget]);
-
-
+  }, [isAuthenticated, navigate]);
 
   // Function to format file size
   const formatFileSize = (bytes: number): string => {
@@ -50,12 +45,12 @@ export const Uploder = () => {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const response = await fetch("http://localhost:4000/images-compress",{
-          method:"GET",
-          headers:{
-            "Content-Type":"application/json",
-            "Authorization":`Bearer ${localStorage.getItem("token")}`
-          }
+        const response = await fetch("http://localhost:4000/images-compress", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -116,17 +111,17 @@ export const Uploder = () => {
 
     const fileData = new FormData();
     fileData.append("file", upload);
-    
-    const token=localStorage.getItem("token");
+
+    const token = localStorage.getItem("token");
 
     try {
       setLoading(true);
       setMessage({ text: "", type: null });
       const res = await axios.post("http://localhost:4000/uploader", fileData, {
-        headers: { 
+        headers: {
           "Content-Type": "multipart/form-data",
-          "Authorization": `Bearer ${token}`,
-         },
+          Authorization: `Bearer ${token}`,
+        },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -140,11 +135,11 @@ export const Uploder = () => {
       setUpload(null);
       setProgress(0);
 
-      const response = await fetch("http://localhost:4000/images-compress",{
-        method:"GET",
-        headers:{
-          "Authorization": `Bearer ${token}`,
-        }
+      const response = await fetch("http://localhost:4000/images-compress", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         throw new Error(`Failed to fetch images: HTTP ${response.status}`);
@@ -166,35 +161,27 @@ export const Uploder = () => {
   };
 
   return (
-    <div
-      className="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-4 p-lg-5 pt-5 position-relative"
-      style={{ background: "linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%)" }}
-    >
+    <div className="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-4 p-lg-5 pt-5 position-relative bg-dark">
       <button
-        className="btn position-fixed bottom-0 end-0 m-4 p-3 rounded-circle shadow"
-        style={{
-          background: "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)",
-          color: "white",
-          zIndex: 1000,
-        }}
+        className="btn btn-dark position-fixed bottom-0 end-0 m-4 p-3 rounded-circle shadow-lg"
         onClick={() => setShowModal(true)}
         title="View Compressed Images"
       >
-        <FiImage size={24} />
+        <FiImage size={24} className="text-light" />
       </button>
 
-      <div className="card border-0 shadow-sm rounded-4 p-4 p-md-5 w-100" style={{ maxWidth: "500px" }}>
+      <div className="card border-0 shadow-lg rounded-4 p-4 p-md-5 w-100 fade show" style={{ maxWidth: "500px", backgroundColor: "#222222" }}>
         <div className="text-center mb-4 mb-md-5">
-          <h1 className="h3 fw-bold text-dark mb-2">Upload Your Image</h1>
-          <p className="text-muted small">Drag and drop or browse to optimize</p>
+          <h1 className="h3 fw-bold text-light mb-2" style={{ fontSize: "1.75rem" }}>
+            Upload Your Image
+          </h1>
+          <p className="small text-white" style={{ fontSize: "0.9rem" }}>
+            Drag and drop or browse to optimize
+          </p>
         </div>
 
         {message.text && (
-          <div
-            className={`d-flex align-items-center gap-2 p-3 mb-4 rounded-3 small ${
-              message.type === "success" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
-            }`}
-          >
+          <div className={`alert ${message.type === "success" ? "alert-dark" : "alert-danger"} d-flex align-items-center gap-2 p-3 mb-4 rounded-3 small fade show`}>
             {message.type === "success" ? <FiCheckCircle className="fs-5" /> : <FiAlertCircle className="fs-5" />}
             {message.text}
           </div>
@@ -203,16 +190,8 @@ export const Uploder = () => {
         <form onSubmit={handleUpload}>
           <div className="mb-4 mb-md-5">
             <label
-              className="d-flex flex-column align-items-center justify-content-center mx-auto border-2 border-dashed rounded-circle cursor-pointer"
-              style={{
-                width: "120px",
-                height: "120px",
-                background: upload
-                  ? "linear-gradient(135deg, #ffb1b1 0%, #d8b4fe 100%)"
-                  : "linear-gradient(135deg, #fce7e7 0%, #ede9fe 100%)",
-                borderColor: upload ? "#f472b6" : "#d1d5db",
-                transition: "all 0.3s ease",
-              }}
+              className="d-flex flex-column align-items-center justify-content-center mx-auto border-2 border-dashed rounded-circle bg-secondary cursor-pointer"
+              style={{ width: "120px", height: "120px", borderColor: upload ? "#b3b3b3" : "#666666" }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
@@ -232,20 +211,8 @@ export const Uploder = () => {
                   setMessage({ text: "", type: null });
                 }
               }}
-              onMouseEnter={(e) => {
-                if (!upload) {
-                  e.currentTarget.style.background = "linear-gradient(135deg, #ffb1b1 0%, #d8b4fe 100%)";
-                  e.currentTarget.style.borderColor = "#f472b6";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!upload) {
-                  e.currentTarget.style.background = "linear-gradient(135deg, #fce7e7 0%, #ede9fe 100%)";
-                  e.currentTarget.style.borderColor = "#d1d5db";
-                }
-              }}
             >
-              <FiUploadCloud className="text-secondary" style={{ fontSize: "2rem" }} />
+              <FiUploadCloud className="fs-2 text-light" />
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/jpg"
@@ -270,10 +237,10 @@ export const Uploder = () => {
               />
             </label>
             <div className="text-center mt-3">
-              <span className="d-block text-dark small fw-medium">
+              <span className="d-block small fw-medium text-light" style={{ fontSize: "0.95rem" }}>
                 {upload ? `${upload.name} (${formatFileSize(upload.size)})` : "Drop your image here or click to browse"}
               </span>
-              <span className="d-block text-muted" style={{ fontSize: "0.75rem" }}>
+              <span className="d-block small text-muted" style={{ fontSize: "0.75rem" }}>
                 Supports PNG, JPG, JPEG (Max 10MB)
               </span>
             </div>
@@ -290,15 +257,11 @@ export const Uploder = () => {
           </div>
 
           {loading && (
-            <div className="progress mb-4" style={{ height: "6px" }}>
+            <div className="progress mb-4" style={{ height: "6px", backgroundColor: "#333333" }}>
               <div
-                className="progress-bar"
+                className="progress-bar bg-secondary"
                 role="progressbar"
-                style={{
-                  width: `${progress}%`,
-                  background: "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)",
-                  transition: "width 0.3s ease",
-                }}
+                style={{ width: `${progress}%` }}
                 aria-valuenow={progress}
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -308,36 +271,17 @@ export const Uploder = () => {
 
           <button
             type="submit"
-            className="btn w-100 text-white py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
-            style={{
-              background: loading
-                ? "#d1d5db"
-                : "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)",
-              border: "none",
-              borderRadius: "0.75rem",
-              transition: "background 0.3s ease",
-            }}
+            className="btn btn-dark w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
             disabled={loading}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.background = "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.background = "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)";
-              }
-            }}
-            onFocus={(e) => e.currentTarget.blur()}
           >
             {loading ? (
               <>
-                <FiLoader className="fs-5 animate-spin" />
+                <FiLoader className="fs-5 animate-spin text-light" />
                 Uploading...
               </>
             ) : (
               <>
-                <FiUploadCloud className="fs-5" />
+                <FiUploadCloud className="fs-5 text-light" />
                 Upload Now
               </>
             )}
@@ -345,34 +289,25 @@ export const Uploder = () => {
         </form>
       </div>
 
-      <div
-        className={`modal fade ${showModal ? "show" : ""}`}
-        style={{ display: showModal ? "block" : "none" }}
-        tabIndex={-1}
-        aria-labelledby="imageGalleryModalLabel"
-        aria-hidden={!showModal}
-      >
+      <div className={`modal fade ${showModal ? "show" : ""}`} style={{ display: showModal ? "block" : "none" }} tabIndex={-1} aria-labelledby="imageGalleryModalLabel" aria-hidden={!showModal}>
         <div className="modal-dialog modal-lg">
-          <div className="modal-content rounded-4 border-0 shadow-sm">
+          <div className="modal-content rounded-4 border-0 shadow-lg" style={{ backgroundColor: "#222222" }}>
             <div className="modal-header border-0">
-              <h5 className="modal-title fw-bold" id="imageGalleryModalLabel">
+              <h5 className="modal-title fw-bold text-light" id="imageGalleryModalLabel" style={{ fontSize: "1.5rem" }}>
                 Compressed Images
               </h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setShowModal(false)}
-                aria-label="Close"
-              ></button>
+              <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)} aria-label="Close"></button>
             </div>
             <div className="modal-body">
               {imagefetch.length === 0 ? (
-                <p className="text-muted text-center">No images available.</p>
+                <p className="text-center text-muted" style={{ fontSize: "1rem" }}>
+                  No images available.
+                </p>
               ) : (
                 <div className="row">
                   {imagefetch.map((image) => (
                     <div key={image.id} className="col-md-6 mb-4">
-                      <div className="card border-0 shadow-sm h-100">
+                      <div className="card border-0 shadow-sm h-100" style={{ backgroundColor: "#2a2a2a" }}>
                         <img
                           src={image.url}
                           alt={image.filename}
@@ -380,18 +315,19 @@ export const Uploder = () => {
                           style={{ height: "150px", objectFit: "cover" }}
                         />
                         <div className="card-body">
-                          <h6 className="card-title text-truncate" title={image.filename}>
+                          <h6 className="card-title text-truncate text-light" title={image.filename} style={{ fontSize: "1rem" }}>
                             {image.filename}
                           </h6>
-                          <p className="card-text small">
-                            <strong>Original Size:</strong> {formatFileSize(image.originalSize)} <br />
-                            <strong>Compressed Size:</strong> {formatFileSize(image.compressedSize)}
+                          <p className="card-text small" style={{ fontSize: "0.85rem" }}>
+                            <strong style={{ color: "whitesmoke" }}>Original Size:</strong>{" "}
+                            <span style={{ color: "red" }}>{formatFileSize(image.originalSize)}</span>
+                            <br />
+                            <strong style={{ color: "whitesmoke" }}>Compressed Size:</strong>{" "}
+                            <span style={{ color: "green" }}>{formatFileSize(image.compressedSize)}</span>
                           </p>
+
                           <button
-                            className="btn btn-sm text-white"
-                            style={{
-                              background: "linear-gradient(135deg, #f472b6 0%, #a855f7 100%)",
-                            }}
+                            className="btn btn-dark btn-sm text-light"
                             onClick={() => handleDownload(image.id, image.filename)}
                           >
                             Download
@@ -406,7 +342,7 @@ export const Uploder = () => {
             <div className="modal-footer border-0">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-dark btn-sm text-light"
                 onClick={() => setShowModal(false)}
               >
                 Close
@@ -416,6 +352,38 @@ export const Uploder = () => {
         </div>
       </div>
       {showModal && <div className="modal-backdrop fade show" onClick={() => setShowModal(false)}></div>}
+
+      {/* Inline CSS for placeholder and hover effects */}
+      <style>{`
+        .form-control::placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .form-control::-webkit-input-placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .form-control::-moz-placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .form-control:-ms-input-placeholder {
+          color: #999999 !important;
+          opacity: 1 !important;
+        }
+        .btn-dark:hover {
+          background-color: #4d4d4d !important;
+          transform: scale(1.05);
+        }
+        .card:hover {
+          transform: scale(1.02);
+        }
+        .cursor-pointer:hover {
+          background-color: #4d4d4d !important;
+          border-color: #cccccc !important;
+          transform: scale(1.05);
+        }
+      `}</style>
     </div>
   );
 };
